@@ -18,13 +18,13 @@ def login(user_credentials: OAuth2PasswordRequestForm = Depends(), db: Session =
     if not utils.verify(user_credentials.password, user.password):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid Credentials")
     
-    user_role = db.query(models.UserRoles).filter(models.UserRoles.user_id == user.id).first()
 
-    if not user_role:
+    role = db.query(models.Role).join(models.UserRoles, models.Role.id == models.UserRoles.role_id).filter(models.UserRoles.user_id == user.id).first()
+
+    if not role:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user role was not found")
 
-    role = db.query(models.Role).filter(models.Role.id == user_role.role_id).first()
-    
     access_token = oauth2.create_access_token(data={"user_id": user.id, "role": role.name})
     
     return {"access_token": access_token, "token_type": "bearer"}
+

@@ -40,6 +40,7 @@ class User(BaseModel):
     id: int
     username: str
     created_at: datetime
+    role: str
 
     class Config:
         orm_mode = True

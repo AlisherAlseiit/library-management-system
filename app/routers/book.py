@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status, Response, HTTPException
 from sqlalchemy.orm import Session
 from ..database import get_db
-from .. import models, schemas, oauth2
+from .. import models, schemas, oauth2, utils
 from typing import List
 from datetime import datetime
 
@@ -25,7 +25,7 @@ def get_book(id: int, db: Session = Depends(get_db)):
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.Book)
 def create_book(book: schemas.BookCreate, db: Session = Depends(get_db), current_user: dict = Depends(oauth2.get_current_user)):
-    if current_user['role'].name != "admin":
+    if current_user['role'].name != utils.Roles.ADMIN:
          raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"permission denied")
     
     new_book = models.Book(**book.dict())
@@ -37,7 +37,7 @@ def create_book(book: schemas.BookCreate, db: Session = Depends(get_db), current
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_book(id: int, db: Session = Depends(get_db), current_user: dict = Depends(oauth2.get_current_user)):
-    if current_user['role'].name != "admin":
+    if current_user['role'].name != utils.Roles.ADMIN:
          raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"permission denied")
     
     book_query = db.query(models.Book).filter(models.Book.id == id)
@@ -55,7 +55,7 @@ def delete_book(id: int, db: Session = Depends(get_db), current_user: dict = Dep
 
 @router.put("/{id}", response_model=schemas.Book)
 def update_book(id: int, updated_book: schemas.BookCreate, db: Session = Depends(get_db), current_user: dict = Depends(oauth2.get_current_user)):
-    if current_user['role'].name != "admin":
+    if current_user['role'].name != utils.Roles.ADMIN:
          raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"permission denied")
     
     book_query = db.query(models.Book).filter(models.Book.id == id)
@@ -72,13 +72,14 @@ def update_book(id: int, updated_book: schemas.BookCreate, db: Session = Depends
 
 @router.post("/borrow", status_code=status.HTTP_201_CREATED)
 def borrow(borrow_data: schemas.Borrow, db: Session = Depends(get_db), current_user: dict = Depends(oauth2.get_current_user)):
-    if current_user['role'].name == "guest":
+    if current_user['role'].name == utils.Roles.GUEST:
          raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"permission denied")
     
     book = db.query(models.Book).filter(models.Book.id == borrow_data.book_id).first()
 
-    if not book:
+    if not book or book.available == False:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"book with id {borrow_data.book_id} was not found")
+    
     
     found_borrow = db.query(models.BorrowedBooks).filter(models.BorrowedBooks.book_id == borrow_data.book_id, 
                                                          models.BorrowedBooks.user_id == borrow_data.user_id,
@@ -96,7 +97,7 @@ def borrow(borrow_data: schemas.Borrow, db: Session = Depends(get_db), current_u
 
 @router.patch("/return")
 def return_book(borrow_data: schemas.Borrow, db: Session = Depends(get_db), current_user: dict = Depends(oauth2.get_current_user)):
-    if current_user['role'].name == "guest":
+    if current_user['role'].name == utils.Roles.GUEST:
          raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"permission denied")
     
     book = db.query(models.Book).filter(models.Book.id == borrow_data.book_id).first()
