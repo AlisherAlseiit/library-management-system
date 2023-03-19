@@ -27,7 +27,7 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
     user_id = user_query.first().id
 
-    role_id = db.query(models.Role).filter(models.Role.name == "guest").first().id
+    role_id = db.query(models.Role).filter(models.Role.name == utils.Roles.USER).first().id
 
     user_roles = models.UserRoles(**{"user_id": user_id, "role_id": role_id}) 
     db.add(user_roles)
@@ -46,3 +46,16 @@ def get_users(db: Session = Depends(get_db), current_user: dict = Depends(oauth2
         models.User.id == models.UserRoles.user_id).join(models.Role, models.Role.id == models.UserRoles.role_id).all()
 
     return results
+
+@router.post("/role", status_code=status.HTTP_201_CREATED, response_model=schemas.Role)
+def create_role(role: schemas.Role, db: Session = Depends(get_db), current_user: dict = Depends(oauth2.get_current_user)):
+    if current_user['role'].name != utils.Roles.ADMIN:
+         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"permission denied")
+    
+    role = models.Role(name=role.name)
+
+    db.add(role)
+    db.commit()
+    db.refresh(role)
+
+    return role

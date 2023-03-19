@@ -13,13 +13,16 @@ router = APIRouter(
 )
 
 @router.get("/", response_model=List[schemas.Book])
-def get_books(db: Session = Depends(get_db)):
+def get_books(db: Session = Depends(get_db), current_user: dict = Depends(oauth2.get_current_user)):
     results = db.query(models.Book).all()
     return results
 
 @router.get("/{id}", response_model=schemas.Book)
-def get_book(id: int, db: Session = Depends(get_db)):
+def get_book(id: int, db: Session = Depends(get_db), current_user: dict = Depends(oauth2.get_current_user)):
     book = db.query(models.Book).filter(models.Book.id == id).first()
+
+    if not book:
+         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="book was not found")
 
     return book
 
@@ -72,8 +75,8 @@ def update_book(id: int, updated_book: schemas.BookCreate, db: Session = Depends
 
 @router.post("/borrow", status_code=status.HTTP_201_CREATED)
 def borrow(borrow_data: schemas.Borrow, db: Session = Depends(get_db), current_user: dict = Depends(oauth2.get_current_user)):
-    if current_user['role'].name == utils.Roles.GUEST:
-         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"permission denied")
+    # if current_user['role'].name == utils.Roles.GUEST:
+    #      raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"permission denied")
     
     book = db.query(models.Book).filter(models.Book.id == borrow_data.book_id).first()
 
@@ -97,8 +100,8 @@ def borrow(borrow_data: schemas.Borrow, db: Session = Depends(get_db), current_u
 
 @router.patch("/return")
 def return_book(borrow_data: schemas.Borrow, db: Session = Depends(get_db), current_user: dict = Depends(oauth2.get_current_user)):
-    if current_user['role'].name == utils.Roles.GUEST:
-         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"permission denied")
+    # if current_user['role'].name == utils.Roles.GUEST:
+    #      raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"permission denied")
     
     book = db.query(models.Book).filter(models.Book.id == borrow_data.book_id).first()
 

@@ -11,6 +11,5 @@ def verify(plain_password, hash_password):
     return pwd_contenxt.verify(plain_password, hash_password)
 
 class Roles(str, Enum):
-    GUEST = "guest"
     USER= "user"
     ADMIN = "admin"

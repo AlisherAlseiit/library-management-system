@@ -51,27 +51,21 @@ def upgrade() -> None:
     op.bulk_insert(roles_table,
         [
             {"name": "admin"},
-            {"name": "user"},
-            {"name": "guest"}
+            {"name": "user"}
         ]
     )
 
-    admin_password = "admin"
-    password = "123"
-
     op.bulk_insert(users_table,
         [
-            {"username": "admin", "password": f"{utils.hash(admin_password)}"},
-            {"username": "alish", "password": f"{utils.hash(password)}"},
-            {"username": "guest", "password": f"{utils.hash(password)}"}
+            {"username": "admin", "password": f"{utils.hash('admin')}"},
+            {"username": "alish", "password": f"{utils.hash('123')}"}
         ]
     )
 
     op.bulk_insert(user_roles_table,
         [
             {"user_id": 1, "role_id": 1},
-            {"user_id": 2, "role_id": 2},
-            {"user_id": 3, "role_id": 3},
+            {"user_id": 2, "role_id": 2}
         ]          
     )
     

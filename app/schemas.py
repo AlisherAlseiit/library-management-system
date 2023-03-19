@@ -22,6 +22,9 @@ class Role(BaseModel):
     id: int
     name: str
 
+class RoleCreate(BaseModel):
+    name: str
+
 class UserCreate(BaseModel):
     username: str
     password: str
