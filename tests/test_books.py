@@ -1,7 +1,9 @@
 import pytest
 from jose import jwt
-from app import schemas
+from app import schemas, models
 from app.config import settings
+
+
 
 
 def test_get_all_books(add_inital_values, authorized_client_user):
@@ -61,4 +63,73 @@ def test_user_delete_book(add_inital_values, authorized_client_user, test_books)
 
 def test_delete_book_non_exist(add_inital_values, authorized_client_admin):
     res = authorized_client_admin.delete(f"/books/254287")
+    assert res.status_code == 404
+
+
+def test_admin_update_book(add_inital_values, authorized_client_admin, test_books):
+    data = {
+        "name": "Saga",
+        "genre": "fantasy"
+    }
+    res = authorized_client_admin.put(f"/books/{test_books[0].id}", json=data)
+    assert res.status_code == 200
+
+def test_unauthorized_user_update_book(client, test_books):
+    data = {
+        "name": "Saga",
+        "genre": "fantasy"
+    }
+    res = client.put(f"/books/{test_books[0].id}", json=data)
+    assert res.status_code == 401
+
+def test_user_update_book(add_inital_values, authorized_client_user, test_books):
+    data = {
+        "name": "Saga",
+        "genre": "fantasy"
+    }
+    res = authorized_client_user.put(f"/books/{test_books[0].id}", json=data)
+    assert res.status_code == 403
+
+def test_update_book_non_exist(add_inital_values, authorized_client_admin):
+    data = {
+        "name": "Saga",
+        "genre": "fantasy"
+    }
+    res = authorized_client_admin.put(f"/books/18239", json=data)
+    assert res.status_code == 404
+
+
+@pytest.fixture
+def test_borrow(test_books, session, test_user):
+    new_borrow = models.BorrowedBooks(book_id=test_books[0].id, user_id=test_user['id'])
+    session.add(new_borrow)
+    session.commit()
+
+def test_user_borrow_book(add_inital_values, authorized_client_user, test_books):
+    res = authorized_client_user.post("/books/borrow", json={"book_id": test_books[0].id})
+    assert res.status_code == 201
+
+def test_borrow_twice_book(add_inital_values, authorized_client_user, test_books, test_borrow):
+    res = authorized_client_user.post("/books/borrow", json={"book_id": test_books[0].id})
+    assert res.status_code == 409
+
+def test_unauthorized_user_borrow_book(client, test_books):
+    res = client.post("/books/borrow", json={"book_id": test_books[0].id})
+    assert res.status_code == 401
+
+def test_borrow_book_non_exist(add_inital_values, authorized_client_user):
+    res = authorized_client_user.post("/books/borrow", json={"book_id": 8000})
+    assert res.status_code == 404
+
+
+def test_user_return_book(add_inital_values, authorized_client_user, test_books, test_borrow):
+    res = authorized_client_user.patch(f"/books/return/{test_books[0].id}")
+    assert res.status_code == 200
+
+def test_unauthorized_user_return_book(client, test_books):
+    res = client.patch(f"/books/return/{test_books[0].id}")
+    assert res.status_code == 401
+
+def test_return_book_non_exist(add_inital_values, authorized_client_user):
+    res = authorized_client_user.patch("/books/return/12492")
     assert res.status_code == 404

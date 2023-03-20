@@ -59,6 +59,5 @@ class TokenData(BaseModel):
 
 class Borrow(BaseModel):
     book_id: int
-    user_id: int
     
     

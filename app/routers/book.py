@@ -45,7 +45,6 @@ def delete_book(id: int, db: Session = Depends(get_db), current_user: dict = Dep
     
     book_query = db.query(models.Book).filter(models.Book.id == id)
     book = book_query.first()
-
     if book == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"book with id {id} was not found")
 
@@ -75,9 +74,6 @@ def update_book(id: int, updated_book: schemas.BookCreate, db: Session = Depends
 
 @router.post("/borrow", status_code=status.HTTP_201_CREATED)
 def borrow(borrow_data: schemas.Borrow, db: Session = Depends(get_db), current_user: dict = Depends(oauth2.get_current_user)):
-    # if current_user['role'].name == utils.Roles.GUEST:
-    #      raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"permission denied")
-    
     book = db.query(models.Book).filter(models.Book.id == borrow_data.book_id).first()
 
     if not book or book.available == False:
@@ -85,33 +81,28 @@ def borrow(borrow_data: schemas.Borrow, db: Session = Depends(get_db), current_u
     
     
     found_borrow = db.query(models.BorrowedBooks).filter(models.BorrowedBooks.book_id == borrow_data.book_id, 
-                                                         models.BorrowedBooks.user_id == borrow_data.user_id,
+                                                         models.BorrowedBooks.user_id == current_user['user'].id,
                                                          models.BorrowedBooks.returned_at == None).first()
     
     if found_borrow:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"user {borrow_data.user_id} has already borrowed book with id {borrow_data.book_id}")
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"user {current_user['user'].id} has already borrowed book with id {borrow_data.book_id}")
         
 
-    new_borrow = models.BorrowedBooks(book_id = borrow_data.book_id, user_id = borrow_data.user_id)
+    new_borrow = models.BorrowedBooks(book_id = borrow_data.book_id, user_id = current_user['user'].id)
     db.add(new_borrow)
     db.commit()
     return {"message": "book was successfullt borrowed"}
 
 
-@router.patch("/return")
-def return_book(borrow_data: schemas.Borrow, db: Session = Depends(get_db), current_user: dict = Depends(oauth2.get_current_user)):
-    # if current_user['role'].name == utils.Roles.GUEST:
-    #      raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"permission denied")
-    
-    book = db.query(models.Book).filter(models.Book.id == borrow_data.book_id).first()
-
+@router.patch("/return/{id}")
+def return_book(id: int, db: Session = Depends(get_db), current_user: dict = Depends(oauth2.get_current_user)):
+    book = db.query(models.Book).filter(models.Book.id == id).first()
     if not book:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"book with id {borrow_data.book_id} was not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"book with id {id} was not found")
     
-    borrow_query = db.query(models.BorrowedBooks).filter(models.BorrowedBooks.book_id == borrow_data.book_id, 
-                                                         models.BorrowedBooks.user_id == borrow_data.user_id, 
+    borrow_query = db.query(models.BorrowedBooks).filter(models.BorrowedBooks.book_id == id, 
+                                                         models.BorrowedBooks.user_id == current_user['user'].id, 
                                                          models.BorrowedBooks.returned_at == None)
-
     borrow = borrow_query.first()
     if not borrow:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="borrow doesn't exist")
