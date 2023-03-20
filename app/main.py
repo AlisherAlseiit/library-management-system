@@ -13,4 +13,4 @@ app.include_router(auth.router)
 
 @app.get("/")
 async def root():
-    return {"message": "Hello, it's my project"}
+    return {"message": "Hello, It's Library Management System Project"}
