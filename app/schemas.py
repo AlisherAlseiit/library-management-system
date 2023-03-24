@@ -17,36 +17,38 @@ class Book(BookBase):
     
     class Config:
         orm_mode = True
-    
-class Role(BaseModel):
-    id: int
+
+
+class RoleBase(BaseModel):
     name: str
 
-class RoleCreate(BaseModel):
-    name: str
+class Role(RoleBase):
+    id: int
+
+class RoleCreate(RoleBase):
+    pass
+
 
 class UserCreate(BaseModel):
     username: str
     password: str
     
-
-class UserOut(BaseModel):
+class UserBase(BaseModel):
     id: int
     username: str
-    created_at: datetime
+    created_at: datetime  
 
+class UserOut(UserBase):
     class Config:
         orm_mode = True
 
-
-class User(BaseModel):
-    id: int
-    username: str
-    created_at: datetime
+class User(UserBase):
     role: str
 
     class Config:
         orm_mode = True
+
+
 
 class Token(BaseModel):
     access_token: str
