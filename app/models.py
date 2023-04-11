@@ -1,6 +1,7 @@
-from .database import Base
 from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, text, ForeignKey
 from sqlalchemy.orm import relationship
+
+from .database import Base
 
 
 class Book(Base):
@@ -34,6 +35,7 @@ class UserRoles(Base):
 
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     role_id = Column(Integer, ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True) 
+
 
 class BorrowedBooks(Base):
     __tablename__ = "borrowed_books"

@@ -1,15 +1,18 @@
 from typing import Optional
-from pydantic import BaseModel, validator, conint
 from datetime import datetime
-import itertools
+
+from pydantic import BaseModel, validator, conint
+
 
 class BookBase(BaseModel):
     name: str
     genre: str
     available: bool = True
 
+
 class BookCreate(BookBase):
     pass
+
 
 class Book(BookBase):
     id: int
@@ -22,8 +25,10 @@ class Book(BookBase):
 class RoleBase(BaseModel):
     name: str
 
+
 class Role(RoleBase):
     id: int
+
 
 class RoleCreate(RoleBase):
     pass
@@ -32,15 +37,18 @@ class RoleCreate(RoleBase):
 class UserCreate(BaseModel):
     username: str
     password: str
-    
+
+
 class UserBase(BaseModel):
     id: int
     username: str
     created_at: datetime  
 
+
 class UserOut(UserBase):
     class Config:
         orm_mode = True
+
 
 class User(UserBase):
     role: str
@@ -49,10 +57,10 @@ class User(UserBase):
         orm_mode = True
 
 
-
 class Token(BaseModel):
     access_token: str
     token_type: str
+
 
 class TokenData(BaseModel):
     id: Optional[int] = None

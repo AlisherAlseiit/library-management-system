@@ -1,12 +1,12 @@
 from fastapi.testclient import TestClient
 import pytest
-from app.main import app
-from app import schemas
 from alembic import command
-
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+
+from app.main import app
+from app import schemas
 from app.config import settings
 from app.database import get_db, Base
 from app.oauth2 import create_access_token
@@ -18,7 +18,6 @@ SQLALCHEMY_DATABASE_URL = f'postgresql://{settings.database_username}:{settings.
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 
 
 @pytest.fixture
@@ -33,7 +32,6 @@ def session():
         db.close()
 
 
-    
 @pytest.fixture
 def client(session):
     def override_get_db():
@@ -61,6 +59,7 @@ def test_user(client):
 def user_token(test_user):
     return create_access_token({"user_id": test_user['id'], "role": "user"})
 
+
 @pytest.fixture
 def authorized_client_user(client, user_token):
     client.headers = {
@@ -70,9 +69,11 @@ def authorized_client_user(client, user_token):
 
     return client
 
+
 @pytest.fixture
 def admin_token():
     return create_access_token({"user_id": 1, "role": "admin"})
+
 
 @pytest.fixture
 def authorized_client_admin(client, admin_token):
@@ -105,6 +106,7 @@ def test_books(session):
     books = [models.Book(**{"name": "Harry Potter and the Deathly Hallows","genre": "Children's Fiction"}), 
              models.Book(**{"name": "Da Vinci Code,The","genre": "Crime, Thriller & Adventure"}),
              models.Book(**{"name": "Fifty Shades of Grey","genre": "Romance & Sagas"})]
+    
     session.add_all(books)
     session.commit()
 
