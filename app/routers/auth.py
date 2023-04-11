@@ -14,7 +14,7 @@ router = APIRouter(
 
 
 @router.post("/login", response_model=schemas.Token)
-def login(user_credentials: Annotated[OAuth2PasswordRequestForm, Depends()], db: Session = Depends(database.get_db)):
+def login(user_credentials: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.get_db)):
     user = users_crud.get_user_by_username(db, user_credentials.username)
     if not user:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid Credentials")

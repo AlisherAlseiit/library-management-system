@@ -10,7 +10,7 @@ def get_user_by_username(db: Session, username: str):
 
 def get_user_by_id(db: Session, id: int):
     user = db.query(models.User, models.Role.name.label("role")).join(models.UserRoles, 
-    models.User.id == models.UserRoles.user_id).join(models.Role, models.Role.id == models.UserRoles.role_id).filter(models.User.id == id)
+    models.User.id == models.UserRoles.user_id).join(models.Role, models.Role.id == models.UserRoles.role_id).filter(models.User.id == id).first()
 
     return user
 

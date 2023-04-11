@@ -42,14 +42,14 @@ def verify_access_token(token: str, credentials_exception):
         token_scopes = payload.get("scopes", [])
         if id == role == None:
             raise credentials_exception
-        token_data = schemas.TokenData(scopes=token_scopes, id=id, role=role)
+        token_data = schemas.TokenData(id=id, role=role, scopes=token_scopes)
     except (JWTError, ValidationError):
         raise credentials_exception
 
     return token_data
 
 
-def get_current_user(security_scopes: SecurityScopes, token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(database.get_db)):
+def get_current_user(security_scopes: SecurityScopes, token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
     if security_scopes.scopes:
         authenticate_value = f'Bearer scope="{security_scopes.scope_str}"'
     else:
@@ -57,7 +57,7 @@ def get_current_user(security_scopes: SecurityScopes, token: Annotated[str, Depe
     credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Could not validate credentials", headers={"WWW-Authenticate": authenticate_value})
 
     token_data = verify_access_token(token, credentials_exception)
-    user = users_crud.get_user_by_id(db, token.id)
+    user = users_crud.get_user_by_id(db, token_data.id)
     if user is None:
         raise credentials_exception
     

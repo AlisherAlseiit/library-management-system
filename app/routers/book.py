@@ -16,13 +16,13 @@ router = APIRouter(
 
 
 @router.get("/", response_model=List[schemas.Book])
-def get_books(current_user: Annotated[schemas.User, Security(oauth2.get_current_user, scopes=["books:read"])], db: Session = Depends(get_db)):
+def get_books(current_user: schemas.User = Security(oauth2.get_current_user, scopes=["books:read"]), db: Session = Depends(get_db)):
     results = books_crud.get_books(db)
     return results
 
 
 @router.get("/{id}", response_model=schemas.Book)
-def get_book(id: int, current_user: Annotated[schemas.User, Security(oauth2.get_current_user, scopes=["books:read"])], db: Session = Depends(get_db)):
+def get_book(id: int, current_user: schemas.User = Security(oauth2.get_current_user, scopes=["books:read"]), db: Session = Depends(get_db)):
     book = books_crud.get_book_by_id(db, id)
     if not book:
          raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="book was not found")
@@ -30,7 +30,7 @@ def get_book(id: int, current_user: Annotated[schemas.User, Security(oauth2.get_
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.Book)
-def create_book(book: schemas.BookCreate, current_user: Annotated[schemas.User, Security(oauth2.get_current_user, scopes=["admin:write"])], db: Session = Depends(get_db)):
+def create_book(book: schemas.BookCreate, current_user: schemas.User = Security(oauth2.get_current_user, scopes=["admin:write"]), db: Session = Depends(get_db)):
     if current_user.role != utils.Roles.ADMIN:
          raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"permission denied")
     
@@ -39,7 +39,7 @@ def create_book(book: schemas.BookCreate, current_user: Annotated[schemas.User, 
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_book(id: int, current_user: Annotated[schemas.User, Security(oauth2.get_current_user, scopes=["admin:write"])], db: Session = Depends(get_db)):
+def delete_book(id: int, current_user: schemas.User = Security(oauth2.get_current_user, scopes=["admin:write"]), db: Session = Depends(get_db)):
     if current_user.role != utils.Roles.ADMIN:
          raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"permission denied")
     
@@ -53,7 +53,7 @@ def delete_book(id: int, current_user: Annotated[schemas.User, Security(oauth2.g
 
 
 @router.put("/{id}", response_model=schemas.Book)
-def update_book(id: int, updated_book: schemas.BookCreate, current_user: Annotated[schemas.User, Security(oauth2.get_current_user, scopes=["admin:write"])], db: Session = Depends(get_db)):
+def update_book(id: int, updated_book: schemas.BookCreate, current_user: schemas.User = Security(oauth2.get_current_user, scopes=["admin:write"]), db: Session = Depends(get_db)):
     if current_user.role != utils.Roles.ADMIN:
          raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"permission denied")
     
@@ -67,7 +67,7 @@ def update_book(id: int, updated_book: schemas.BookCreate, current_user: Annotat
 
 
 @router.post("/borrow", status_code=status.HTTP_201_CREATED)
-def borrow(borrow_data: schemas.Borrow, current_user: Annotated[schemas.User, Security(oauth2.get_current_user, scopes=["books:borrow"])], db: Session = Depends(get_db)):
+def borrow(borrow_data: schemas.Borrow, current_user: schemas.User = Security(oauth2.get_current_user, scopes=["books:borrow"]), db: Session = Depends(get_db)):
     book = books_crud.get_book_by_id(db, borrow_data.book_id)
     if not book or book.available == False:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"book with id {borrow_data.book_id} was not found")
@@ -82,7 +82,7 @@ def borrow(borrow_data: schemas.Borrow, current_user: Annotated[schemas.User, Se
 
 
 @router.patch("/return/{id}")
-def return_book(id: int, current_user: Annotated[schemas.User, Security(oauth2.get_current_user, scopes=["books:return"])], db: Session = Depends(get_db)):
+def return_book(id: int, current_user: schemas.User = Security(oauth2.get_current_user, scopes=["books:return"]), db: Session = Depends(get_db)):
     book = books_crud.get_book_by_id(db, id)
     if not book:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"book with id {id} was not found")
