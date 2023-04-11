@@ -65,7 +65,7 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     id: Optional[int] = None
     role: Optional[str] = None
-
+    scopes: list[str] = []
 
 class Borrow(BaseModel):
     book_id: int

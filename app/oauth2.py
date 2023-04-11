@@ -1,15 +1,24 @@
 from datetime import datetime, timedelta
+from typing import Annotated
 
 from jose import JWTError, jwt
-from fastapi import Depends, status, HTTPException
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, status, HTTPException, Security
+from fastapi.security import OAuth2PasswordBearer, SecurityScopes
 from sqlalchemy.orm import Session
+from pydantic import ValidationError
 
 from . import schemas, database, models
 from .config import settings
+from .crud import users_crud
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='login')
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl='login',
+    scopes={"books:read": "This scope allows users to view the list of books in the library.", 
+            "books:borrow": " This scope allows users to borrow books from the library.", 
+            "books:return": "This scope allows users to return books to the library.", 
+            "admin:write": "This scope allows admin users to perform write operations, such as creating, updating, and deleting books."}
+    )
 
 SECRET_KEY = settings.secret_key
 ALGORITHM = settings.algorithm
@@ -30,24 +39,34 @@ def verify_access_token(token: str, credentials_exception):
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         id: str = payload.get("user_id")
         role: str = payload.get("role")
+        token_scopes = payload.get("scopes", [])
         if id == role == None:
             raise credentials_exception
-        token_data = schemas.TokenData(id=id, role=role)
-    except JWTError:
+        token_data = schemas.TokenData(scopes=token_scopes, id=id, role=role)
+    except (JWTError, ValidationError):
         raise credentials_exception
 
     return token_data
 
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
-    credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
-    token = verify_access_token(token, credentials_exception)
-    user = db.query(models.User).filter(models.User.id == token.id).first()
-    user_role = db.query(models.UserRoles).filter(models.UserRoles.user_id == user.id).first()
+def get_current_user(security_scopes: SecurityScopes, token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(database.get_db)):
+    if security_scopes.scopes:
+        authenticate_value = f'Bearer scope="{security_scopes.scope_str}"'
+    else:
+        authenticate_value = "Bearer"
+    credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Could not validate credentials", headers={"WWW-Authenticate": authenticate_value})
 
-    if not user_role:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user role was not found")
-
-    role = db.query(models.Role).filter(models.Role.id == user_role.role_id).first()
+    token_data = verify_access_token(token, credentials_exception)
+    user = users_crud.get_user_by_id(db, token.id)
+    if user is None:
+        raise credentials_exception
     
-    return {"user": user, "role": role}
+    for scope in security_scopes.scopes:
+        if scope not in token_data.scopes:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Not enough permissinos",
+                headers={"WWW-Authenticate": authenticate_value}
+            )
+
+    return user

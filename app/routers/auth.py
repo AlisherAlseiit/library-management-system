@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, status, HTTPException, Response
 from fastapi.security.oauth2 import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -12,7 +14,7 @@ router = APIRouter(
 
 
 @router.post("/login", response_model=schemas.Token)
-def login(user_credentials: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.get_db)):
+def login(user_credentials: Annotated[OAuth2PasswordRequestForm, Depends()], db: Session = Depends(database.get_db)):
     user = users_crud.get_user_by_username(db, user_credentials.username)
     if not user:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid Credentials")
@@ -24,7 +26,7 @@ def login(user_credentials: OAuth2PasswordRequestForm = Depends(), db: Session =
     if not role:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user role was not found")
 
-    access_token = oauth2.create_access_token(data={"user_id": user.id, "role": role.name})
+    access_token = oauth2.create_access_token(data={"user_id": user.id, "role": role.name, "scopes": user_credentials.scopes})
     
     return {"access_token": access_token, "token_type": "bearer"}
 

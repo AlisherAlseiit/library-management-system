@@ -29,8 +29,8 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/", response_model=List[schemas.User])
-def get_users(db: Session = Depends(get_db), current_user: dict = Depends(oauth2.get_current_user)):
-    if current_user['role'].name != utils.Roles.ADMIN:
+def get_users(db: Session = Depends(get_db), current_user: schemas.User = Depends(oauth2.get_current_user)):
+    if current_user.role != utils.Roles.ADMIN:
          raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"permission denied")
 
     results = users_crud.get_users(db)
@@ -38,8 +38,8 @@ def get_users(db: Session = Depends(get_db), current_user: dict = Depends(oauth2
 
 
 @router.post("/role", status_code=status.HTTP_201_CREATED, response_model=schemas.Role)
-def create_role(role: schemas.Role, db: Session = Depends(get_db), current_user: dict = Depends(oauth2.get_current_user)):
-    if current_user['role'].name != utils.Roles.ADMIN:
+def create_role(role: schemas.Role, db: Session = Depends(get_db), current_user: schemas.User = Depends(oauth2.get_current_user)):
+    if current_user.role != utils.Roles.ADMIN:
          raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"permission denied")
     
     role = roles_crud.create_role(db, role)
