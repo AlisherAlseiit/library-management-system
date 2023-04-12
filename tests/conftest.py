@@ -57,7 +57,7 @@ def test_user(client):
 
 @pytest.fixture
 def user_token(test_user):
-    return create_access_token({"user_id": test_user['id'], "role": "user"})
+    return create_access_token({"user_id": test_user['id'], "role": "user", "scopes": ["books:read", "books:borrow", "books:return"]})
 
 
 @pytest.fixture
