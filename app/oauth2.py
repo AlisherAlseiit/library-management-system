@@ -12,7 +12,7 @@ from .config import settings
 from .crud import users_crud
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", scopes=utils.ALLOWED_SCOPES)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login", scopes=utils.ALLOWED_SCOPES)
 
 SECRET_KEY = settings.secret_key
 ALGORITHM = settings.algorithm
