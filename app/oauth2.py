@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Annotated
+from typing import Annotated, List, Set
 
 from jose import JWTError, jwt
 from fastapi import Depends, status, HTTPException, Security
@@ -7,18 +7,12 @@ from fastapi.security import OAuth2PasswordBearer, SecurityScopes
 from sqlalchemy.orm import Session
 from pydantic import ValidationError
 
-from . import schemas, database, models
+from . import schemas, database, models, utils
 from .config import settings
 from .crud import users_crud
 
 
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl='login',
-    scopes={"books:read": "This scope allows users to view the list of books in the library.", 
-            "books:borrow": " This scope allows users to borrow books from the library.", 
-            "books:return": "This scope allows users to return books to the library.", 
-            "admin:write": "This scope allows admin users to perform write operations, such as creating, updating, and deleting books."}
-    )
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", scopes=utils.ALLOWED_SCOPES)
 
 SECRET_KEY = settings.secret_key
 ALGORITHM = settings.algorithm

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from .. import database, schemas, models, utils, oauth2
 from ..crud import users_crud
+from ..oauth2 import oauth2_scheme
 
 
 router = APIRouter(
@@ -15,6 +16,12 @@ router = APIRouter(
 
 @router.post("/login", response_model=schemas.Token)
 def login(user_credentials: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.get_db)):
+    if not utils.validate_scopes(user_credentials.scopes):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='Insufficient scope'
+        )
+
     user = users_crud.get_user_by_username(db, user_credentials.username)
     if not user:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid Credentials")
