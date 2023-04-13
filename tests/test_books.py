@@ -15,6 +15,11 @@ def test_unauthorized_user_get_all_books(client):
     assert res.status_code == 401
 
 
+def test_third_party_application_get_all_books_without_appropriate_scope(add_inital_values, third_party_application):
+    res = third_party_application.get("/books/")
+    assert res.status_code == 401
+
+
 def test_get_one_book(add_inital_values, authorized_client_user, test_books):
     res = authorized_client_user.get(f"/books/{test_books[0].id}")
     assert res.status_code == 200
@@ -22,6 +27,11 @@ def test_get_one_book(add_inital_values, authorized_client_user, test_books):
 
 def test_unauthorized_get_one_book(client, test_books):
     res = client.get(f"/books/{test_books[0].id}")
+    assert res.status_code == 401
+
+
+def test_third_party_application_get_one_book_without_appropriate_scope(add_inital_values, third_party_application, test_books):
+    res = third_party_application.get(f"/books/{test_books[0].id}")
     assert res.status_code == 401
 
 
@@ -122,13 +132,18 @@ def test_user_borrow_book(add_inital_values, authorized_client_user, test_books)
     assert res.status_code == 201
 
 
-def test_borrow_twice_book(add_inital_values, authorized_client_user, test_books, test_borrow):
+def test_borrow__one_book_twice(add_inital_values, authorized_client_user, test_books, test_borrow):
     res = authorized_client_user.post("/books/borrow", json={"book_id": test_books[0].id})
     assert res.status_code == 409
 
 
 def test_unauthorized_user_borrow_book(client, test_books):
     res = client.post("/books/borrow", json={"book_id": test_books[0].id})
+    assert res.status_code == 401
+
+
+def test_third_party_application_borrow_book_without_appropriate_scope(add_inital_values, third_party_application, test_books):
+    res = third_party_application.post("/books/borrow", json={"book_id": test_books[0].id})
     assert res.status_code == 401
 
 
@@ -145,6 +160,11 @@ def test_user_return_book(add_inital_values, authorized_client_user, test_books,
 def test_unauthorized_user_return_book(client, test_books):
     res = client.patch(f"/books/return/{test_books[0].id}")
     assert res.status_code == 401
+
+
+def test_third_party_application_return_book_without_appropriate_scope(add_inital_values, third_party_application, test_books):
+    res = third_party_application.patch(f"/books/return/{test_books[0].id}")
+    assert res.status_code == 401  
 
 
 def test_return_book_non_exist(add_inital_values, authorized_client_user):

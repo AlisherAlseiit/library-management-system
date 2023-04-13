@@ -71,6 +71,21 @@ def authorized_client_user(client, user_token):
 
 
 @pytest.fixture
+def third_party_application_token(test_user):
+    return create_access_token({"user_id": test_user['id'], "role": "user"})
+
+
+@pytest.fixture
+def third_party_application(client, third_party_application_token):
+    client.headers = {
+        **client.headers,
+        "Authorization": f"Bearer {third_party_application_token}"
+    }
+
+    return client
+
+
+@pytest.fixture
 def admin_token():
     return create_access_token({"user_id": 1, "role": "admin"})
 
